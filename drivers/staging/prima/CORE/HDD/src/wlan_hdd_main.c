@@ -8938,6 +8938,63 @@ free_hdd_ctx:
    hdd_set_ssr_required (VOS_FALSE);
 }
 
+/*HTC_WIFI_START*/
+static int hdd_readwrite_file(const char *filename, char *rbuf, const char *wbuf, size_t length)
+{
+    int ret = 0;
+    struct file *filp = (struct file *)-ENOENT;
+    mm_segment_t oldfs;
+    oldfs = get_fs();
+    set_fs(KERNEL_DS);
+    do {
+	int mode = (wbuf) ? O_RDWR : O_RDONLY;
+	filp = filp_open(filename, mode, S_IRUSR);
+	if (IS_ERR(filp) || !filp->f_op) {
+		hddLog(VOS_TRACE_LEVEL_ERROR, "%s: file %s filp_open error\n", __func__, filename);
+		ret = -ENOENT;
+		break;
+	}
+
+	if (length == 0) {
+		/* Read the length of the file only */
+		struct inode    *inode;
+
+		inode = (filp)->f_path.dentry->d_inode;
+		if (!inode) {
+			hddLog(VOS_TRACE_LEVEL_ERROR, "%s: Get inode from %s failed\n", __func__, filename);
+			ret = -ENOENT;
+			break;
+		}
+		ret = i_size_read(inode->i_mapping->host);
+		break;
+	}
+
+	if (wbuf) {
+		ret = filp->f_op->write(filp, wbuf, length, &filp->f_pos);
+		if (ret  < 0) {
+		hddLog(VOS_TRACE_LEVEL_ERROR, "%s: Write %u bytes to file %s error %d\n", __func__,
+			length, filename, ret);
+			break;
+		}
+		} else {
+			ret = filp->f_op->read(filp, rbuf, length, &filp->f_pos);
+			if (ret < 0) {
+			hddLog(VOS_TRACE_LEVEL_ERROR, "%s: Read %u bytes from file %s error %d\n", __func__,
+				length, filename, ret);
+			break;
+		}
+	}
+    } while (0);
+
+    if (!IS_ERR(filp))
+	filp_close(filp, NULL);
+    set_fs(oldfs);
+
+    return ret;
+}
+/*HTC_WIFI_END*/
+
+
 
 /**---------------------------------------------------------------------------
 
@@ -8955,6 +9012,80 @@ static VOS_STATUS hdd_update_config_from_nv(hdd_context_t* pHddCtx)
    VOS_STATUS status;
    v_MACADDR_t macFromNV[VOS_MAX_CONCURRENCY_PERSONA];
    v_U8_t      macLoop;
+
+//HTC_WIFI_START
+#if 1 /* For HTC */
+   int macfilesize = hdd_readwrite_file("proc/calibration", NULL, NULL, 0);
+   if (macfilesize > 0) {
+      char *macbuf = vos_mem_malloc(macfilesize+1);
+      if (macbuf) {
+         macfilesize = hdd_readwrite_file("proc/calibration", macbuf, NULL, macfilesize);
+         if (macfilesize > 0) {
+            int j;
+            unsigned int softmac[6];
+            char *src = macbuf;
+            macbuf[macfilesize] = '\0';
+            for (j = 0; j < VOS_MAX_CONCURRENCY_PERSONA && src != NULL; ) {
+               v_BYTE_t *ptr_mac = pHddCtx->cfg_ini->intfMacAddr[j].bytes;
+               if (!strncmp(src, "macaddr=00:11:22:33:44:55", 25)) {
+                   int i;
+                   u8 bytes[6];
+                   get_random_bytes(bytes, 6);
+                   hddLog(VOS_TRACE_LEVEL_FATAL, "Find Default MAC !!!!!");
+                   softmac[0] = 0x00;
+                   ptr_mac[0] = 0x00;
+                   softmac[1] = 0x88;
+                   ptr_mac[1] = 0x88;
+                   for (i = 2; i < 6; ++i) {
+                      softmac[i] = (v_BYTE_t)bytes[i];
+                      ptr_mac[i] = softmac[i] & 0xff;
+                   }
+                   hddLog(VOS_TRACE_LEVEL_FATAL, "%s: mac address [%02x:%02x:%02x:%02x:%02x:%02x]", __func__,
+                   /* HTC_WIFI_START */
+                          //softmac[0], softmac[1], softmac[2],
+                          //softmac[3], softmac[4], softmac[5]);
+                          ~softmac[0]&0xff, ~softmac[1]&0xff, ~softmac[2]&0xff,
+                          ~softmac[3]&0xff, ~softmac[4]&0xff, ~softmac[5]&0xff);
+                   /* HTC_WIFI_END */
+                   ++j;
+               } else {
+                   if (sscanf(src, "macaddr=%02x:%02x:%02x:%02x:%02x:%02x",
+                       &softmac[0], &softmac[1], &softmac[2],
+                       &softmac[3], &softmac[4], &softmac[5]) == 6) {
+                       int i;
+                       for (i = 0; i < 6; ++i)
+                          ptr_mac[i] = softmac[i] & 0xff;
+                       hddLog(VOS_TRACE_LEVEL_FATAL, "%s: mac address [%02x:%02x:%02x:%02x:%02x:%02x]", __func__,
+                       /* HTC_WIFI_START */
+                              //softmac[0], softmac[1], softmac[2],
+                              //softmac[3], softmac[4], softmac[5]);
+                              ~softmac[0]&0xff, ~softmac[1]&0xff, ~softmac[2]&0xff,
+                              ~softmac[3]&0xff, ~softmac[4]&0xff, ~softmac[5]&0xff);
+                       /* HTC_WIFI_END */
+                       ++j;
+                    }
+                }
+                src = strchr(src, '\n');
+                if (src)
+                   ++src;
+            }
+            if (j==1) {
+               v_BYTE_t *ptr_mac = pHddCtx->cfg_ini->intfMacAddr[j].bytes;
+               memcpy(ptr_mac, pHddCtx->cfg_ini->intfMacAddr[0].bytes, 6);
+               ptr_mac[0] |= 0x2;
+               ptr_mac[4] ^= (1 << 7);
+               hddLog(VOS_TRACE_LEVEL_FATAL, "%s: only 1 mac in calbriation. Set p2p0 as [%02x:%02x:%02x:%02x:%02x:%02x]", __func__,
+               /* HTC_WIFI_START */
+               //ptr_mac[0], ptr_mac[1], ptr_mac[2], ptr_mac[3], ptr_mac[4], ptr_mac[5]);
+               ~ptr_mac[0]&0xff, ~ptr_mac[1]&0xff, ~ptr_mac[2]&0xff, ~ptr_mac[3]&0xff, ~ptr_mac[4]&0xff, ~ptr_mac[5]&0xff);
+               /* HTC_WIFI_END */
+            }
+         }
+         vos_mem_free(macbuf);
+      }
+   } else {
+#endif /* For HTC */
+//HTC_WIFI_END
 
    /*If the NV is valid then get the macaddress from nv else get it from qcom_cfg.ini*/
    status = vos_nv_getValidity(VNV_FIELD_IMAGE, &itemIsValid);
@@ -9008,7 +9139,11 @@ static VOS_STATUS hdd_update_config_from_nv(hdd_context_t* pHddCtx)
       hddLog(VOS_TRACE_LEVEL_ERROR, "NV ITEM, MAC Not valid");
       return VOS_STATUS_E_FAILURE;
    }
-
+//HTC_WIFI_START
+#if 1 /* For HTC */
+    }
+#endif /* For HTC */
+//HTC_WIFI_END
 
    return VOS_STATUS_SUCCESS;
 }
