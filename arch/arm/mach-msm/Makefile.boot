@@ -126,6 +126,8 @@ endif
    zreladdr-$(CONFIG_ARCH_MSM8226)	:= 0x00008000
 ifeq ($(CONFIG_MACH_MEM_UL), y)
 	dtb-$(CONFIG_ARCH_MSM8226)  += msm8926-memul.dtb
+else ifeq ($(CONFIG_MACH_MEM_WL), y)
+	dtb-$(CONFIG_ARCH_MSM8226)  += msm8926-memwl.dtb
 else 
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sim.dtb
 	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-fluid.dtb

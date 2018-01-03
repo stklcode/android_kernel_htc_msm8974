@@ -1,0 +1,471 @@
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/dts-v1/;
+/include/ "msm8926.dtsi"
+/include/ "msm8226-720p-mtp.dtsi"
+/include/ "msm8226-camera-sensor-evm.dtsi"
+/include/ "dsi-panel-mem.dtsi"
+/include/ "msm8226-mem-storage.dtsi"
+/include/ "msm8926-touch-mem-config.dtsi"
+/include/ "msm8926-remove-cp-mm.dtsi"
+
+/ {
+	model = "MSM 8926 MEMWL";
+	compatible = "htc,memwl", "qcom,msm8926-mtp", "qcom,msm8926", "qcom,mtp";
+	htc,project-id = <0x121 0x0 0x0 0x121 0x1 0x0 0x121 0x2 0x0 0x121 0x80 0x0 0x121 0x0 0x10001 0x121 0x1 0x10001 0x121 0x2 0x10001 0x121 0x80 0x10001>;  /* <pid hw-version reserve> */
+	qcom,msm-id = <0x91 0x8 0x0 0x9e 0x8 0x0 0x9f 0x8 0x0 0xc6 0x8 0x0 0xcd 0x8 0x0>;
+};
+
+&cci {
+	/* Rotate rear camera to 0 degrees */
+	qcom,camera@6f {
+	qcom,mount-angle = <0>;
+	};
+};
+
+&memory {
+	secure_region {
+		linux,contiguous-region;
+		reg = <0x0 0x6d00000>;
+		label = "secure_mem";
+		linux,phandle = <0x2>;
+		phandle = <0x2>;
+	};
+	
+	qsecom_region {
+		linux,contiguous-region;
+		reg = <0x0 0xd00000>;
+		label = "qsecom_mem";
+		linux,phandle = <0x4>;
+		phandle = <0x4>;
+	};
+};
+
+&soc {
+
+	qcom,ion {
+		qcom,ion-heap@21 {
+			reg = <0x15>;
+			qcom,ion-heap-type = "SYSTEM_CONTIG";
+		};
+		
+		qcom,ion-heap@27 {
+			compatible = "qcom,msm-ion-reserve";
+			reg = <0x1b>;
+			linux,contiguous-region = <0x4>;
+			qcom,ion-heap-type = "DMA";
+		};
+	};
+	
+	qcom,csid@fda08000 {
+		cell-index = <0x0>;
+		compatible = "qcom,csid";
+		reg = <0xfda08000 0x100>;
+		reg-names = "csid";
+		interrupts = <0x0 0x33 0x0>;
+		interrupt-names = "csid";
+		qcom,csi-vdd-voltage = <0x124f80>;
+		qcom,mipi-csi-vdd-supply = <0x5>;
+	};
+		
+	qcom,csid@fda08400 {
+		cell-index = <0x1>;
+		compatible = "qcom,csid";
+		reg = <0xfda08400 0x100>;
+		reg-names = "csid";
+		interrupts = <0x0 0x34 0x0>;
+		interrupt-names = "csid";
+		qcom,csi-vdd-voltage = <0x124f80>;
+		qcom,mipi-csi-vdd-supply = <0x5>;
+	};
+	
+	qcom,vfe@fda10000 {
+		cell-index = <0x0>;
+		compatible = "qcom,vfe40";
+		reg = <0xfda10000 0x1000 0xfda40000 0x200 0xfd4a8000 0x4>;
+		reg-names = "vfe", "vfe_vbif", "tcsr";
+		interrupts = <0x0 0x39 0x0>;
+		interrupt-names = "vfe";
+		vdd-supply = <0x6>;
+	};
+	
+	qcom,jpeg@fda1c000 {
+		cell-index = <0x0>;
+		compatible = "qcom,jpeg";
+		reg = <0xfda1c000 0x400>;
+		reg-names = "jpeg";
+		interrupts = <0x0 0x3b 0x0>;
+		interrupt-names = "jpeg";
+		vdd-supply = <0x7>;
+	};
+	
+	qcom,cpp@fda04000 {
+		cell-index = <0x0>;
+		compatible = "qcom,cpp";
+		reg = <0xfda04000 0x100 0xfda40000 0x200 0xfda18000 0x18>;
+		reg-names = "cpp", "cpp_vbif", "cpp_hw";
+		interrupts = <0x0 0x31 0x0>;
+		interrupt-names = "cpp";
+		vdd-supply = <0x6>;
+	};
+
+
+	i2c@f9928000 {
+		cm3629@60 {
+			compatible = "CM3629";
+			reg = <0x60>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0x41 0x02>;
+			interrupt-names = "cm3629";
+			cm3629,irq-gpio = <&msmgpio 0x41 0x00>;
+			cm3629,model = <0x0>;
+			cm3629,ps_select = <0x1>;
+			cm3629,levels = <0x19 0x114 0x20f 0x30a 0x3fd 0x8ae 0xac7 0xe6a 0x120d 0xffff>;
+			cm3629,correction = <0x64 0xfa 0x384 0x7d0 0x9c4 0xbb8 0xdac 0x1194 0x1fa4 0x2710 0xffff>;
+			cm3629,golden_adc = <0x93a>;
+			cm3629,cm3629_slave_address = <0x60>;
+			cm3629,ps_th_add = <0x8>;
+			cm3629,ps1_thd_set = <0x15>;
+			cm3629,ps1_thd_no_cal = <0x5f>;
+			cm3629,ps1_thd_with_cal = <0xd>;
+			cm3629,ps_calibration_rule = <0x1>;
+			cm3629,dynamical_threshold = <0x1>;
+			cm3629,dark_level = <0x3>;
+			cm3629,ps_duty = <0x0>;
+			cm3629,ps_it = <0x3>;
+			cm3629,ps_pers = <0x1>;
+			cm3629,ps_itb = <0x2>;
+			cm3629,ps_itr = <0x0>;
+			SR_2v85-supply = <0x55>;
+		};
+	};
+
+	i2c@f9928000 {
+		nxp_pn544_nfc@28 {
+			compatible = "nxp,pn544-nfc";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <35 0x4>;
+			nxp,ven-gpio = <&msmgpio 0x8 0x0>;
+			nxp,irq-gpio = <&msmgpio 0x23 0x0>;
+			nxp,fwdl-gpio = <&msmgpio 0x2 0x0>;
+			nxp,ven_isinvert = <0x0>;
+			nxp,isalive = <0x1>;
+		};
+	};
+
+	i2c@f9928000 {
+		tps_65132@7C {
+			compatible = "disp-tps-65132";
+			reg = <0x7c>;
+		};
+	};
+
+	i2c@f9924000 {
+        compass_yas53x@2e {
+            compatible = "htc_compass,yas53x";
+            reg = <0x2e>;
+            interrupt-parend = <&msmgpio>;
+            interrupts = <0x40 0x0>;
+            SR_1V8-supply = <&pm8226_l28>;
+            SR_2V85-supply = <&pm8226_l19>;
+            compass_yas53x,chip_layout = <0x5>;
+        };
+    };
+
+	i2c@f9924000 {
+		compass_akm8963@d {
+			compatible = "htc_compass,akm8963";
+			reg = <0xd>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0x42 0x0>;
+			SR_1v8-supply = <&pm8226_l28>;
+			SR_2v85-supply = <&pm8226_l19>;
+			compass_akm8963,layout = <0x5>;
+			compass_akm8963,outbit = <0x1>;
+			compass_akm8963,gpio_DRDY  = <&msmgpio 0x42 0x0>;
+			compass_akm8963,gpio_RST = <0x0>;
+		};
+	};
+
+	i2c@f9924000 {
+		g_sensor_bma250@18 {
+			compatible = "htc_g_sensor,bma250_bosch";
+			reg = <0x18>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <0x3f 0x0>;
+			SR_1v8-supply = <&pm8226_l28>;
+			SR_2v85-supply = <&pm8226_l19>;
+			g_sensor_bma250,intr        = <&msmgpio 0x3f 0x0>;
+			g_sensor_bma250,chip_layout = <0x0>;
+			g_sensor_bma250,axis_map_x = <0x1>;
+			g_sensor_bma250,axis_map_y = <0x0>;
+			g_sensor_bma250,axis_map_z = <0x2>;
+			g_sensor_bma250,negate_x = <0x0>;
+			g_sensor_bma250,negate_y = <0x0>;
+			g_sensor_bma250,negate_z = <0x1>;
+		};
+	};
+
+	gpio_event {
+		compatible = "key,gpio-event";
+		names = "device-keypad";
+		clr_gpio = <&msmgpio 0x22 0x0>;
+
+		key0 {
+			gpio    = <&msmgpio 0x6a 0x3>;
+			keycode = <0x74>;	//pwr
+		};
+		key1 {
+			gpio    = <&msmgpio 0x6c 0x3>;
+			keycode = <0x73>;	//vUP
+		};
+		key2 {
+			gpio    = <&msmgpio 0x6b 0x3>;
+			keycode = <0x72>;	//vDN
+		};
+	};
+
+	keyreset {
+		compatible = "keyreset_driver";
+		keyreset,driver_state = "enable";
+	};
+
+	headset_mgr {
+		compatible   = "htc_headset,mgr";
+		mgr,tx_gpio  = <&msmgpio 0xc 0x0>;
+		mgr,rx_gpio  = <&msmgpio 0xd 0x0>;
+		mgr,oe_gpio  = <&msmgpio 0x3 0x0>;
+		mgr,bias_gpio  = <&msmgpio 0x6e 0x0>;
+		mgr,wire_alt = <0x2>;
+		mgr,hs_typenum   = <0x2>;
+		mgr,hs_type      = <0x2 0x1>;
+		mgr,adc_max      = <0x605 0xfe>;
+		mgr,adc_min      = <0xff 0x0>;
+	};
+
+	headset_pmic {
+		compatible = "htc_headset,pmic";
+		interrupt-parent = <&msmgpio>;
+		hs_pmic,key_gpio 	= <&msmgpio 0xd 0x0>;
+		hs_pmic,driver_flag     = <0x4>;
+		hs_pmic,hpin_gpio       = <&msmgpio 0x25 0x0>;
+		hs_pmic,hpin_irq        = <>;
+		hs_pmic,key_irq         = <0x0>;
+		hs_pmic,key_enable_gpio = <0x0>;
+		hs_pmic,adc_mic         = <0x0>;
+		hs_pmic,adc_remote      = <0 56 57 146 147 339>;
+		hs_pmic,adc_channel     = <0x11>;	//P_MUX2_1_1
+		hs_pmic,adc_mpp         = <0x0>;
+		hs_pmic,adc_amux        = <0x0>;
+		hs_pmic,hs_controller   = <0x0>;
+		hs_pmic,hs_switch       = <0x0>;
+		qcom,headset-vadc	= <&pm8226_vadc>;
+	};
+
+	headset_onewire {
+		compatible = "htc_headset,1wire";
+		hs_1wire,tx_level_shift_en = <&msmgpio 0x3 0x0>;
+		hs_1wire,one_wire_remote = <0x7e 0x7f 0x7d 0x7f 0x7b 0x7f>;
+		hs_1wire,onewire_tty_dev = "ttyHSL1";
+	};
+
+/*Audio config start*/
+	slim_msm: slim@fe12f000 {
+		tapan_codec {
+			qcom,cdc-micbias-cfilt2-mv = <1800>;
+		};
+	};
+
+	sound {
+		qcom,audio-routing =
+			"Lineout_1 amp", "LINEOUT1",
+			"Lineout_2 amp", "LINEOUT2",
+			"RX_BIAS", "MCLK",
+			"LDO_H", "MCLK",
+			"SPK_OUT", "MCLK",
+			"SPK_OUT", "EXT_VDD_SPKR",
+			"AMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Handset Mic",
+			"AMIC2", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Headset Mic",
+			"AMIC3", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Handset Mic",
+			"AMIC4", "MIC BIAS2 External",
+			"MIC BIAS2 External", "ANCRight Headset Mic",
+			"AMIC5", "MIC BIAS2 External",
+			"MIC BIAS2 External", "ANCLeft Headset Mic";
+
+		qcom,cdc-mclk-gpios = <&pm8226_gpios 0x1 0x0>;
+		qcom,cdc-vdd-spkr-gpios = <>;
+
+		qcom,prim-auxpcm-gpio-clk  = <>;
+		qcom,prim-auxpcm-gpio-sync = <>;
+		qcom,prim-auxpcm-gpio-din  = <>;
+		qcom,prim-auxpcm-gpio-dout = <>;
+		qcom,sec-auxpcm-gpio-clk  = <>;
+		qcom,sec-auxpcm-gpio-sync = <>;
+		qcom,sec-auxpcm-gpio-din  = <>;
+		qcom,sec-auxpcm-gpio-dout = <>;
+
+		mi2s-gpio-sck   = <&msmgpio 0x31 0x0>;
+		mi2s-gpio-ws    = <&msmgpio 0x32 0x0>;
+		mi2s-gpio-sda0  = <&msmgpio 0x33 0x0>;
+		mi2s-gpio-sda1  = <&msmgpio 0x34 0x0>;
+		mi2s-afe-portid = <0x1004>;
+
+		rcv-gpio-sel    = <&msmgpio 0x0 0x0>;
+		rcv-gpio-en     = <&msmgpio 0x45 0x0>;
+
+		htc,aud-hw-component = "RT5501", "TFA9887", "TFA9887L";
+		htc,aud-digital-mic-en = <0x0>;
+		htc,aud-24b-en = <0x1>;
+	};
+
+	i2c@f9926000 {
+		nxp_tfa9887_amp@34 {
+			compatible = "nxp,tfa9887-amp";
+			reg = <0x34>;
+		};
+		nxp_tfa9887l_amp@35 {
+			compatible = "nxp,tfa9887l-amp";
+			reg = <0x35>;
+		};
+		richteck_rt5501_amp@52 {
+			compatible = "richtek,rt5506-amp";
+			reg = <0x52>;
+			richtek,enable-gpio = <&msmgpio 0x71 0x0>;
+		};
+	};
+
+	qcom,msm-dai-mi2s {
+		compatible = "qcom,msm-dai-mi2s";
+		qcom,msm-dai-q6-mi2s-quat {
+			compatible = "qcom,msm-dai-q6-mi2s";
+			qcom,msm-dai-q6-mi2s-dev-id = <0x2>;
+			qcom,msm-mi2s-rx-lines = <0x1>;
+			qcom,msm-mi2s-tx-lines = <0x2>;
+		};
+	};
+	/delete-node/ sound-9302;
+/*Audio config end*/
+	/include/ "msm8926-ax-soc-mem.dtsi"
+};
+
+
+&usb_otg {
+    qcom,hsusb-otg-phy-init-seq =
+            <0x44 0x80 0x3f 0x81 0x3c 0x82 0x13 0x83 0xffffffff>;
+    qcom,hsusb-otg-phy-init-seq-no-uart-switch =
+            <0x44 0x80 0x3b 0x81 0x3c 0x82 0x13 0x83 0xffffffff>;
+};
+
+&pm8226_bms {
+	qcom,use-external-rsense;
+	qcom,battery-data = <&mem_batterydata>;
+	qcom,enable-fcc-learning;
+	qcom,min-fcc-learning-soc = <0x14>;
+	qcom,min-fcc-ocv-pc = <0x1e>;
+	qcom,min-fcc-learning-samples = <0x5>;
+	qcom,fcc-resolution = <0xa>;
+	qcom,enable-sw-ocv-in-eoc = <0x1>;
+	qcom,enable-batt-full-fake-ocv = <0x1>;
+	qcom,criteria-sw-est-ocv = <0x5265c00>;
+	qcom,rconn-mohm-sw-est-ocv = <0x14>;
+	status = "ok";
+};
+
+&pm8226_chg {
+	qcom,vddmax-mv = <0x10fe>;
+	qcom,vddsafe-mv = <0x1108>;
+	qcom,vinmin-mv = <0x10cc>;
+	qcom,vbatdet-delta-mv = <0x32>;
+	qcom,ibatmax-ma = <0x6d6>;
+	qcom,ibatterm-ma = <0xb4>;
+	qcom,ibatsafe-ma = <0x6d6>;
+	qcom,thermal-mitigation = <0x5dc 0x2bc 0x258 0x145>;
+	qcom,resume-soc = <0x63>;
+	qcom,tchg-mins = <0x3c0>;
+	qcom,chg-vadc = <&pm8226_vadc>;
+	qcom,chg-adc_tm = <&pm8226_adc_tm>;
+	qcom,pmic-revid = <0x50>;
+	qcom,warm-bat-decidegc = <0x1e0>;
+	qcom,warm-bat-mv = <0xfa0>;
+	qcom,cool-bat-decidegc = <0x0>;
+	qcom,cool-bat-mv = <0x10fe>;
+	qcom,ibatmax-cool-ma = <0x6d6>;
+	otg-parent-supply = <0x51>;
+	qcom,cold-threshold = <0x1>;
+	qcom,hot-threshold = <0x0>;
+	qcom,ibatmax-warm-ma = <1750>;
+	qcom,batt-hot-percentage = <0x19>;
+	qcom,batt-cold-percentage = <0x50>;
+	qcom,eoc-ibat-thre-ma = <0x32>;
+	qcom,is-embeded-batt = <0x1>;
+    qcom,pm8921-aicl-target-ma = <0x44c>;
+	qcom,aicl-qc20-enable-board-version = <0x80>;
+	htc,ext-ovpfet-enable-board-version = <0x2>;
+	htc,external-ovpfet-gpio = <&msmgpio 0x72 0x0>;
+	htc,external-ovpfet-temp-ok-rext = <0xd1>;
+	htc,external-ovpfet-temp-cool-rext = <0xc8>;
+	htc,external-ovpfet-cool-decidegc  = <0x64>;
+
+	status = "ok";
+	qcom,charging-disabled;
+	qcom,enable-qct-adjust-vddmax;
+	qcom,pm8921-aicl-enabled;
+	qcom,qc20-chg-enabled;
+
+	qcom,chgr@1000 {
+		status = "ok";
+	};
+
+	qcom,buck@1100 {
+		status = "ok";
+	};
+
+	qcom,bat-if@1200 {
+		status = "ok";
+	};
+
+	qcom,usb-chgpth@1300 {
+		status = "ok";
+	};
+
+	qcom,dc-chgpth@1400 {
+		status = "ok";
+	};
+
+	qcom,boost@1500 {
+		status = "ok";
+	};
+
+	qcom,chg-misc@1600 {
+		status = "ok";
+	};
+};
+
+/ {
+	mem_batterydata: qcom,battery-data {
+		qcom,rpull-up-kohm = <0x64>;
+		qcom,vref-batt-therm = <0x1b7740>;
+
+			/include/ "batterydata-mem-id1.dtsi"
+			/include/ "batterydata-mem-unknown-id.dtsi"
+	};
+};
+
+&mdss_dsi0 {
+	htc,lcm_p5v-gpio = <&msmgpio 0x21 0x0>;
+	htc,lcm_n5v-gpio = <&msmgpio 0x1f 0x0>;
+};
